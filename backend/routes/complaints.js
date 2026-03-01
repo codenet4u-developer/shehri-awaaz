@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Create a complaint
-router.post('/', authMiddleware, upload.single('image'), (req, res) => {
+router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     const { title, description, category, location } = req.body;
     const userId = req.user.id;
@@ -32,72 +32,80 @@ router.post('/', authMiddleware, upload.single('image'), (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    db.run(
-      'INSERT INTO complaints (user_id, title, description, category, location, image_path) VALUES (?, ?, ?, ?, ?, ?)',
-      [userId, title, description, category, location, imagePath],
-      function (err) {
-        if (err) {
-          return res.status(500).json({ error: 'Failed to create complaint' });
-        }
-        res.status(201).json({ id: this.lastID, message: 'Complaint created successfully' });
-      }
-    );
+    const { data, error } = await db
+      .from('complaints')
+      .insert([{ user_id: userId, title, description, category, location, image_path: imagePath }])
+      .select();
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to create complaint' });
+    }
+
+    res.status(201).json({ id: data[0].id, message: 'Complaint created successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Get all complaints (admin) or user's complaints (citizen)
-router.get('/', authMiddleware, (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    let query = 'SELECT c.*, u.name, u.email FROM complaints c JOIN users u ON c.user_id = u.id';
-    let params = [];
+    let query = db
+      .from('complaints')
+      .select('*, users(name, email)')
+      .order('created_at', { ascending: false });
 
     if (req.user.role === 'citizen') {
-      query += ' WHERE c.user_id = ?';
-      params.push(req.user.id);
+      query = query.eq('user_id', req.user.id);
     }
 
-    query += ' ORDER BY c.created_at DESC';
+    const { data, error } = await query;
 
-    db.all(query, params, (err, rows) => {
-      if (err) {
-        return res.status(500).json({ error: 'Failed to fetch complaints' });
-      }
-      res.json(rows);
-    });
+    if (error) {
+      return res.status(500).json({ error: 'Failed to fetch complaints' });
+    }
+
+    res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Get a single complaint
-router.get('/:id', authMiddleware, (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const complaintId = req.params.id;
 
-    db.get('SELECT * FROM complaints WHERE id = ?', [complaintId], (err, complaint) => {
-      if (err || !complaint) {
-        return res.status(404).json({ error: 'Complaint not found' });
-      }
+    const { data: complaint, error } = await db
+      .from('complaints')
+      .select('*')
+      .eq('id', complaintId)
+      .single();
 
-      // Check authorization
-      if (req.user.role === 'citizen' && complaint.user_id !== req.user.id) {
-        return res.status(403).json({ error: 'Unauthorized' });
-      }
+    if (error || !complaint) {
+      return res.status(404).json({ error: 'Complaint not found' });
+    }
 
-      // Fetch updates
-      db.all('SELECT * FROM updates WHERE complaint_id = ? ORDER BY created_at DESC', [complaintId], (err, updates) => {
-        res.json({ ...complaint, updates: updates || [] });
-      });
-    });
+    // Check authorization
+    if (req.user.role === 'citizen' && complaint.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Fetch updates
+    const { data: updates } = await db
+      .from('updates')
+      .select('*')
+      .eq('complaint_id', complaintId)
+      .order('created_at', { ascending: false });
+
+    res.json({ ...complaint, updates: updates || [] });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Update complaint status (admin only)
-router.put('/:id', authMiddleware, adminMiddleware, (req, res) => {
+router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { status, message } = req.body;
     const complaintId = req.params.id;
@@ -108,40 +116,45 @@ router.put('/:id', authMiddleware, adminMiddleware, (req, res) => {
     }
 
     // Update complaint status
-    db.run('UPDATE complaints SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [status, complaintId], function (err) {
-      if (err) {
-        return res.status(500).json({ error: 'Failed to update complaint' });
-      }
+    const { error: updateError } = await db
+      .from('complaints')
+      .update({ status, updated_at: new Date() })
+      .eq('id', complaintId);
 
-      // Add update record if message is provided
-      if (message) {
-        db.run('INSERT INTO updates (complaint_id, admin_id, message, status) VALUES (?, ?, ?, ?)', [complaintId, adminId, message, status]);
-      }
+    if (updateError) {
+      return res.status(500).json({ error: 'Failed to update complaint' });
+    }
 
-      res.json({ message: 'Complaint updated successfully' });
-    });
+    // Add update record if message is provided
+    if (message) {
+      await db
+        .from('updates')
+        .insert([{ complaint_id: complaintId, admin_id: adminId, message, status }]);
+    }
+
+    res.json({ message: 'Complaint updated successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Get analytics (admin only)
-router.get('/admin/analytics', authMiddleware, adminMiddleware, (req, res) => {
+router.get('/admin/analytics', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    db.get(
-      `SELECT 
-        COUNT(*) as total_complaints,
-        SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending,
-        SUM(CASE WHEN status = 'In Progress' THEN 1 ELSE 0 END) as in_progress,
-        SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) as resolved
-       FROM complaints`,
-      (err, row) => {
-        if (err) {
-          return res.status(500).json({ error: 'Failed to fetch analytics' });
-        }
-        res.json(row);
-      }
-    );
+    const { data: complaints, error } = await db
+      .from('complaints')
+      .select('status');
+
+    if (error) {
+      return res.status(500).json({ error: 'Failed to fetch analytics' });
+    }
+
+    const total_complaints = complaints.length;
+    const pending = complaints.filter(c => c.status === 'Pending').length;
+    const in_progress = complaints.filter(c => c.status === 'In Progress').length;
+    const resolved = complaints.filter(c => c.status === 'Resolved').length;
+
+    res.json({ total_complaints, pending, in_progress, resolved });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }

@@ -18,22 +18,21 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Insert user
-    db.run(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      [name, email, hashedPassword, role || 'citizen'],
-      function (err) {
-        if (err) {
-          if (err.message.includes('UNIQUE constraint failed')) {
-            return res.status(400).json({ error: 'Email already exists' });
-          }
-          return res.status(500).json({ error: 'Registration failed' });
-        }
+    const { data, error } = await db
+      .from('users')
+      .insert([{ name, email, password: hashedPassword, role: role || 'citizen' }])
+      .select();
 
-        const user = { id: this.lastID, email, role: role || 'citizen' };
-        const token = generateToken(user);
-        res.status(201).json({ token, user });
+    if (error) {
+      if (error.message.includes('duplicate key') || error.message.includes('violates unique constraint')) {
+        return res.status(400).json({ error: 'Email already exists' });
       }
-    );
+      return res.status(500).json({ error: 'Registration failed' });
+    }
+
+    const user = { id: data[0].id, email, role: data[0].role };
+    const token = generateToken(user);
+    res.status(201).json({ token, user });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -48,19 +47,23 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
-      if (err || !user) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
+    const { data: users, error } = await db
+      .from('users')
+      .select('*')
+      .eq('email', email);
 
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
+    if (error || !users || users.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-      const token = generateToken(user);
-      res.json({ token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
-    });
+    const user = users[0];
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = generateToken(user);
+    res.json({ token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
