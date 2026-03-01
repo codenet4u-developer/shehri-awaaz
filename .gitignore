@@ -10,7 +10,6 @@ npm-debug.log*
 .env.production.local
 .vscode
 .idea
-dist
 build
 uploads/*
 !uploads/.gitkeep

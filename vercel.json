@@ -3,7 +3,6 @@
   "buildCommand": "npm install",
   "devCommand": "node backend/server.js",
   "installCommand": "npm install && cd backend && npm install",
-  "outputDirectory": "frontend/dist",
   "env": {
     "NODE_ENV": "production"
   }
