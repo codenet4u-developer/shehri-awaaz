@@ -35,7 +35,7 @@ function ComplaintForm({ token, onSubmitSuccess }) {
         formPayload.append('image', formData.image);
       }
 
-      const response = await fetch(`http://${window.location.hostname}:5000/api/complaints`, {
+      const response = await fetch('/api/complaints', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formPayload,

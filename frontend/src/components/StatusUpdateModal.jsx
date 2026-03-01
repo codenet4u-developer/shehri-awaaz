@@ -12,7 +12,7 @@ function StatusUpdateModal({ complaint, token, onClose, onStatusUpdated }) {
     setError('');
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/complaints/${complaint.id}`, {
+      const response = await fetch(`/api/complaints/${complaint.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
