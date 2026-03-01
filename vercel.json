@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "npm install",
-  "devCommand": "node backend/server.js",
+  "public": true,
+  "buildCommand": "cd backend && npm install",
   "installCommand": "npm install && cd backend && npm install",
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "PORT": "3000"
   }
 }

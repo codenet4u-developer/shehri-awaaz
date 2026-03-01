@@ -19,11 +19,12 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// Serve frontend build in production
-const frontendPath = path.join(__dirname, '../frontend/dist');
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(frontendPath));
-}
+// Serve frontend build - check both locations
+const publicPath = path.resolve(__dirname, '../public');
+const frontendPath = path.resolve(__dirname, '../frontend/dist');
+const staticPath = process.env.NODE_ENV === 'production' ? publicPath : frontendPath;
+
+app.use(express.static(staticPath));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -36,9 +37,7 @@ app.get('/api/health', (req, res) => {
 
 // Serve React app for all non-API routes (SPA)
 app.get('*', (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  }
+  res.sendFile(path.join(staticPath, 'index.html'));
 });
 
 // Error handling middleware
