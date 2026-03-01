@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../config.js';
 
 function Login({ setToken, setUser }) {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -22,7 +23,7 @@ function Login({ setToken, setUser }) {
       const endpoint = isSignUp ? 'register' : 'login';
       const payload = isSignUp ? formData : { email: formData.email, password: formData.password };
 
-      const response = await fetch(`/api/auth/${endpoint}`, {
+      const response = await fetch(`${API_URL}/auth/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

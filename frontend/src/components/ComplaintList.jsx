@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL, BASE_URL } from '../config.js';
 import StatusUpdateModal from './StatusUpdateModal';
 
 function ComplaintList({ token, userRole, refreshKey }) {
@@ -16,7 +17,7 @@ function ComplaintList({ token, userRole, refreshKey }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/complaints', {
+      const response = await fetch(`${API_URL}/complaints`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -142,7 +143,7 @@ function ComplaintList({ token, userRole, refreshKey }) {
                 <p style={{ color: '#94a3b8', marginBottom: '0.5rem' }}>
                   <strong>Image:</strong>
                 </p>
-                <img src={selectedComplaint.image_path} alt="Complaint" style={{ maxWidth: '100%', borderRadius: '12px', boxShadow: '0 8px 20px rgba(34, 197, 94, 0.2)' }} />
+                <img src={`${BASE_URL}${selectedComplaint.image_path}`} alt="Complaint" style={{ maxWidth: '100%', borderRadius: '12px', boxShadow: '0 8px 20px rgba(34, 197, 94, 0.2)' }} />
               </div>
             )}
             <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>

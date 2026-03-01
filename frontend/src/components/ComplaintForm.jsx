@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { API_URL } from '../config.js';
 
-function ComplaintForm({ token, onSubmitSuccess }) {
+function ComplaintForm({ token, onComplaintAdded }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: '',
+    category: 'Roads & Infrastructure',
     location: '',
     image: null,
   });
@@ -35,7 +36,7 @@ function ComplaintForm({ token, onSubmitSuccess }) {
         formPayload.append('image', formData.image);
       }
 
-      const response = await fetch('/api/complaints', {
+      const response = await fetch(`${API_URL}/complaints`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formPayload,

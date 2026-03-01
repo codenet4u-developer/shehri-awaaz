@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../config.js';
 
 function Analytics({ token }) {
   const [analytics, setAnalytics] = useState(null);
@@ -13,7 +14,7 @@ function Analytics({ token }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/complaints/admin/analytics', {
+      const response = await fetch(`${API_URL}/complaints/admin/analytics`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

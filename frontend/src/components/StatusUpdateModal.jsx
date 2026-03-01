@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL } from '../config.js';
 
 function StatusUpdateModal({ complaint, token, onClose, onStatusUpdated }) {
   const [status, setStatus] = useState(complaint.status);
@@ -12,7 +13,7 @@ function StatusUpdateModal({ complaint, token, onClose, onStatusUpdated }) {
     setError('');
 
     try {
-      const response = await fetch(`/api/complaints/${complaint.id}`, {
+      const response = await fetch(`${API_URL}/complaints/${complaint.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
