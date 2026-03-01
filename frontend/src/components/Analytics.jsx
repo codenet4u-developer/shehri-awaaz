@@ -13,7 +13,7 @@ function Analytics({ token }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:5000/api/complaints/admin/analytics', {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/complaints/admin/analytics`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

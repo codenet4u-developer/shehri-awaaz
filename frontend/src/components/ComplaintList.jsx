@@ -16,7 +16,7 @@ function ComplaintList({ token, userRole, refreshKey }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:5000/api/complaints', {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/complaints`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -142,7 +142,7 @@ function ComplaintList({ token, userRole, refreshKey }) {
                 <p style={{ color: '#94a3b8', marginBottom: '0.5rem' }}>
                   <strong>Image:</strong>
                 </p>
-                <img src={`http://localhost:5000${selectedComplaint.image_path}`} alt="Complaint" style={{ maxWidth: '100%', borderRadius: '12px', boxShadow: '0 8px 20px rgba(34, 197, 94, 0.2)' }} />
+                <img src={`http://${window.location.hostname}:5000${selectedComplaint.image_path}`} alt="Complaint" style={{ maxWidth: '100%', borderRadius: '12px', boxShadow: '0 8px 20px rgba(34, 197, 94, 0.2)' }} />
               </div>
             )}
             <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
