@@ -9,16 +9,8 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, join(__dirname, '../uploads'));
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
+// Configure multer for memory storage (required for Vercel Serverless)
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Create a complaint
@@ -26,10 +18,27 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     const { title, description, category, location } = req.body;
     const userId = req.user.id;
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+    let imagePath = null;
 
     if (!title || !description || !category || !location) {
       return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    if (req.file) {
+      const fileName = `${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const { data: uploadData, error: uploadError } = await db.storage
+        .from('complaints')
+        .upload(fileName, req.file.buffer, {
+          contentType: req.file.mimetype,
+        });
+
+      if (uploadError) {
+        console.error('Upload Error:', uploadError);
+        return res.status(500).json({ error: 'Failed to upload image to storage' });
+      }
+
+      const { data: urlData } = db.storage.from('complaints').getPublicUrl(fileName);
+      imagePath = urlData.publicUrl;
     }
 
     const { data, error } = await db
@@ -38,11 +47,13 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       .select();
 
     if (error) {
+      console.error('DB Insert Error:', error);
       return res.status(500).json({ error: 'Failed to create complaint' });
     }
 
     res.status(201).json({ id: data[0].id, message: 'Complaint created successfully' });
   } catch (err) {
+    console.error('Server error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
