@@ -23,12 +23,13 @@ router.post('/register', async (req, res) => {
       .insert([{ name, email, password: hashedPassword, role: role || 'citizen' }])
       .select();
 
-    if (error) {
-      if (error.message.includes('duplicate key') || error.message.includes('violates unique constraint')) {
-        return res.status(400).json({ error: 'Email already exists' });
+      if (error) {
+        console.error('Supabase registration error:', error);
+        if (error.message.includes('duplicate key') || error.message.includes('violates unique constraint')) {
+          return res.status(400).json({ error: 'Email already exists' });
+        }
+        return res.status(500).json({ error: 'Registration failed', details: error.message });
       }
-      return res.status(500).json({ error: 'Registration failed' });
-    }
 
     const user = { id: data[0].id, email, role: data[0].role };
     const token = generateToken(user);
