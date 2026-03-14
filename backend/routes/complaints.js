@@ -48,7 +48,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
 
     if (error) {
       console.error('DB Insert Error:', error);
-      return res.status(500).json({ error: 'Failed to create complaint' });
+      return res.status(500).json({ error: 'Failed to create complaint', details: error.message || error });
     }
 
     res.status(201).json({ id: data[0].id, message: 'Complaint created successfully' });
