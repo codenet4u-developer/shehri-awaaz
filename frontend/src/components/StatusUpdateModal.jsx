@@ -13,13 +13,13 @@ function StatusUpdateModal({ complaint, token, onClose, onStatusUpdated }) {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/complaints/${complaint.id}`, {
-        method: 'PATCH',
+      const response = await fetch(`${API_URL}/complaints/update-status`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status, message }),
+        body: JSON.stringify({ id: complaint.id, status, message }),
       });
 
       let data;
