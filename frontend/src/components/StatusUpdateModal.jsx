@@ -22,9 +22,17 @@ function StatusUpdateModal({ complaint, token, onClose, onStatusUpdated }) {
         body: JSON.stringify({ status, message }),
       });
 
+      let data;
+      const text = await response.text();
+      
+      try {
+        if (text) data = JSON.parse(text);
+      } catch (err) {
+        throw new Error(`Server returned non-JSON: ${text.substring(0, 50)}`);
+      }
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to update complaint');
+        throw new Error(data?.error || data?.message || 'Failed to update complaint');
       }
 
       onStatusUpdated();
