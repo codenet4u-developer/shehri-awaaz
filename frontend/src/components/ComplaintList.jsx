@@ -35,9 +35,12 @@ function ComplaintList({ token, userRole, refreshKey }) {
   };
 
   const getStatusBadgeColor = (status) => {
-    if (status === 'Pending') return { background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: '#78350f' };
-    if (status === 'In Progress') return { background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', color: '#164e63' };
-    if (status === 'Resolved') return { background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', color: '#172121' };
+    if (!status) return { background: 'rgba(34, 197, 94, 0.1)', color: '#4ade80' };
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus === 'pending') return { background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', color: '#78350f' };
+    if (lowerStatus === 'in-progress') return { background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', color: '#164e63' };
+    if (lowerStatus === 'resolved') return { background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', color: '#172121' };
+    if (lowerStatus === 'rejected') return { background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: '#7f1d1d' };
     return { background: 'rgba(34, 197, 94, 0.1)', color: '#4ade80' };
   };
 
@@ -138,12 +141,12 @@ function ComplaintList({ token, userRole, refreshKey }) {
               <strong>Description:</strong>
             </p>
             <p style={{ color: '#f3f4f6', marginBottom: '1rem', whiteSpace: 'pre-wrap' }}>{selectedComplaint.description}</p>
-            {selectedComplaint.image_path && (
+            {selectedComplaint.attachments && selectedComplaint.attachments.length > 0 && (
               <div style={{ marginBottom: '1rem' }}>
                 <p style={{ color: '#94a3b8', marginBottom: '0.5rem' }}>
                   <strong>Image:</strong>
                 </p>
-                <img src={`${BASE_URL}${selectedComplaint.image_path}`} alt="Complaint" style={{ maxWidth: '100%', borderRadius: '12px', boxShadow: '0 8px 20px rgba(34, 197, 94, 0.2)' }} />
+                <img src={selectedComplaint.attachments[0].file_url} alt="Complaint" style={{ maxWidth: '100%', borderRadius: '12px', boxShadow: '0 8px 20px rgba(34, 197, 94, 0.2)' }} />
               </div>
             )}
             <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>

@@ -1,75 +1,60 @@
-# Supabase Setup Guide
+# Supabase Setup Guide for Serverless Shehri Awaaz
 
-## Step 1: Create Tables in Supabase
+## 1. Create a New Supabase Project
+1. Go to [https://supabase.com/](https://supabase.com/) and create a free project.
+2. Save your **Project URL** and **anon public key**.
 
-1. Go to your Supabase Dashboard: https://app.supabase.com
-2. Select your project
-3. Go to **SQL Editor** (left sidebar)
-4. Create a new query and copy-paste all SQL from `supabase_schema.sql`
-5. Click **RUN** to create all tables
+## 2. Execute SQL Schema
+Navigate to the "SQL Editor" in your Supabase dashboard and execute the following snippet. Wait for a success message.
 
-## Step 2: Your Connection Details
+```sql
+-- 1. Users Table (Linked to Supabase Auth)
+CREATE TABLE users (
+  id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  role TEXT DEFAULT 'citizen' CHECK (role IN ('citizen', 'admin')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
-```
-URL: https://lsrtscmguepoumwsenme.supabase.co
-API Key: sb_publishable_XAZdDAaUIEt6ngIdw-8pvw_mc7o0pA2
-```
+-- 2. Complaints Table
+CREATE TABLE complaints (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category TEXT NOT NULL,
+  location TEXT NOT NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'in-progress', 'resolved', 'rejected')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
-✓ Already configured in `backend/.env`
-
-## Step 3: API Endpoints (Test These)
-
-### Health Check
-```
-GET http://localhost:5000/api/health
-Response: {"status":"API is running"}
-```
-
-### Register User
-```
-POST http://localhost:5000/api/auth/register
-Body: {
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password123",
-  "role": "citizen"
-}
-```
-
-### Login
-```
-POST http://localhost:5000/api/auth/login
-Body: {
-  "email": "john@example.com",
-  "password": "password123"
-}
-Response: {token: "...", user: {...}}
+-- 3. Attachments Table (File metadata)
+CREATE TABLE attachments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  complaint_id UUID REFERENCES complaints(id) ON DELETE CASCADE,
+  file_url TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 ```
 
-### Create Complaint (needs Authorization header with token)
-```
-POST http://localhost:5000/api/complaints
-Headers: Authorization: Bearer <your_token>
-Body: {
-  "title": "Pothole on Main Street",
-  "description": "Deep pothole blocking traffic",
-  "category": "Roads",
-  "location": "Main Street, Downtown"
-}
-```
+## 3. Create Storage Bucket
+1. Navigate to the "Storage" section.
+2. Click **New Bucket**.
+3. Name it exactly: `complaint-files`
+4. Toggle it as **Public Bucket** so images display properly on the frontend.
 
-### Get All Complaints
-```
-GET http://localhost:5000/api/complaints
-Headers: Authorization: Bearer <your_token>
-```
+## 4. Setup Authentication
+Supabase Auth is enabled by default. Nothing major to change. You can toggle OFF email confirmation for easier local testing under Authentication -> Providers -> Email.
 
-## Server Status
-✓ Backend running on http://localhost:5000
-✓ Database connected to Supabase
-✓ All APIs configured and ready
+## 5. Add Vercel Environment Variables
+You will need to pass these values to the root of your Vercel project when importing:
+```env
+# Full Service / Backend Access (For `/api/` functions)
+SUPABASE_URL=your-supabase-url
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key 
 
-## Next Action
-1. Run the SQL from `supabase_schema.sql` in Supabase dashboard
-2. Test endpoints using Postman or Thunder Client
-3. All should work perfectly!
+# Frontend Access (For `/frontend/` logic)
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```

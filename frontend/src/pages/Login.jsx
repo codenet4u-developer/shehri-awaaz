@@ -20,7 +20,7 @@ function Login({ setToken, setUser }) {
     setError('');
 
     try {
-      const endpoint = isSignUp ? 'register' : 'login';
+      const endpoint = isSignUp ? 'signup' : 'login';
       const payload = isSignUp ? formData : { email: formData.email, password: formData.password };
 
       const response = await fetch(`${API_URL}/auth/${endpoint}`, {

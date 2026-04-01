@@ -45,9 +45,10 @@ function StatusUpdateModal({ complaint, token, onClose, onStatusUpdated }) {
           <div style={{ marginBottom: '1.5rem', animation: 'fadeIn 0.5s ease-out' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#4ade80' }}>Status*</label>
             <select value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '2px solid rgba(34, 197, 94, 0.2)', borderRadius: '12px', background: '#0f172a', color: '#f3f4f6', transition: 'all 0.3s ease' }} onFocus={(e) => { e.target.style.borderColor = '#22c55e'; e.target.style.boxShadow = '0 0 0 3px rgba(34, 197, 94, 0.2)'; }} onBlur={(e) => { e.target.style.borderColor = 'rgba(34, 197, 94, 0.2)'; e.target.style.boxShadow = 'none'; }}>
-              <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Resolved">Resolved</option>
+              <option value="pending">Pending</option>
+              <option value="in-progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="rejected">Rejected</option>
             </select>
           </div>
 

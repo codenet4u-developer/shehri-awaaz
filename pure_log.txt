@@ -1,0 +1,10 @@
+5118179 Revert to exact previous API parser state with ONLY the size limit augmented
+c4afaf7 Fix req.body being overwritten by Express JSON parser on Vercel
+25a859e Restore bodyParser config to fix login/signup payload parsing
+6215fce Fix complaint submission via JSON Base64
+bc66c68 fix(api): expose supabase error structure in production response for debugging
+c699866 fix(api): disable vercel default body parser so multer can process multipart streams
+ec33fc4 fix(frontend): force relative api paths on vercel production
+1c4f5c2 fix(cors): add explicit handling for OPTIONS and credentials for vercel frontend
+84c0521 fix(db): add explicit check for missing supabase env vars
+d0e11eb fix(auth): add verbose error logging to diagnose registration failure

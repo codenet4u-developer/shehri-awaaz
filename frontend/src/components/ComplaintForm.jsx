@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { API_URL } from '../config.js';
+import { supabase } from '../supabaseClient.js';
 
-function ComplaintForm({ token, onComplaintAdded }) {
+function ComplaintForm({ token, onSubmitSuccess }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -27,27 +28,51 @@ function ComplaintForm({ token, onComplaintAdded }) {
     setError('');
 
     try {
-      const formPayload = new FormData();
-      formPayload.append('title', formData.title);
-      formPayload.append('description', formData.description);
-      formPayload.append('category', formData.category);
-      formPayload.append('location', formData.location);
+      let file_url = null;
+
+      // Upload file directly to Supabase Storage if an extremely good experience is required
       if (formData.image) {
-        formPayload.append('image', formData.image);
+        const fileExt = formData.image.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('complaint-files')
+          .upload(filePath, formData.image);
+        
+        if (uploadError) {
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
+
+        // Retrieve public URL
+        const { data } = supabase.storage.from('complaint-files').getPublicUrl(filePath);
+        file_url = data.publicUrl;
       }
+
+      // Instead of FormData, just send a JSON payload
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        location: formData.location,
+        file_url: file_url || null,
+      };
 
       const response = await fetch(`${API_URL}/complaints`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formPayload,
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to submit complaint');
+        throw new Error(data.message || 'Failed to submit complaint');
       }
 
-      setFormData({ title: '', description: '', category: '', location: '', image: null });
+      setFormData({ title: '', description: '', category: 'Roads & Infrastructure', location: '', image: null });
       onSubmitSuccess();
     } catch (err) {
       setError(err.message);
