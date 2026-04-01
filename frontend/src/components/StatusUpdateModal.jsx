@@ -14,7 +14,7 @@ function StatusUpdateModal({ complaint, token, onClose, onStatusUpdated }) {
 
     try {
       const response = await fetch(`${API_URL}/complaints/${complaint.id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
