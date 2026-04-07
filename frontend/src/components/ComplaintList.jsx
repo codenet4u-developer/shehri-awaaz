@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL, BASE_URL } from '../config.js';
-import StatusUpdateModal from './StatusUpdateModal';
 
 function ComplaintList({ token, userRole, refreshKey }) {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedComplaint, setSelectedComplaint] = useState(null);
-  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     fetchComplaints();
@@ -48,15 +46,27 @@ function ComplaintList({ token, userRole, refreshKey }) {
     setSelectedComplaint(complaint);
   };
 
-  const handleEditStatus = (complaint) => {
-    setSelectedComplaint(complaint);
-    setShowModal(true);
-  };
+  const updateStatus = async (id, status) => {
+    try {
+      const res = await fetch(`${API_URL}/complaints/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
 
-  const handleStatusUpdated = () => {
-    setShowModal(false);
-    setSelectedComplaint(null);
-    fetchComplaints();
+      const data = await res.json();
+
+      // Update UI instantly
+      setComplaints(prev =>
+        prev.map(c => c.id === id ? data : c)
+      );
+    } catch (err) {
+      console.error(err);
+      setError('Failed to update status');
+    }
   };
 
   if (loading) return <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8', animation: 'fadeIn 0.5s ease-out' }}>Loading complaints...</div>;
@@ -88,20 +98,27 @@ function ComplaintList({ token, userRole, refreshKey }) {
                   <td style={{ padding: '1rem', color: '#94a3b8' }}>{complaint.category}</td>
                   <td style={{ padding: '1rem', color: '#94a3b8' }}>{complaint.location}</td>
                   <td style={{ padding: '1rem' }}>
-                    <span style={{ ...getStatusBadgeColor(complaint.status), padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.875rem', fontWeight: '600', display: 'inline-block', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', transition: 'all 0.3s ease', cursor: 'default' }}>
-                      {complaint.status}
-                    </span>
+                    {userRole === 'admin' ? (
+                      <select
+                        value={complaint.status}
+                        onChange={(e) => updateStatus(complaint.id, e.target.value)}
+                        style={{ background: 'rgba(30, 41, 59, 0.8)', color: '#f3f4f6', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.875rem' }}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="resolved">Resolved</option>
+                      </select>
+                    ) : (
+                      <span style={{ ...getStatusBadgeColor(complaint.status), padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.875rem', fontWeight: '600', display: 'inline-block', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', transition: 'all 0.3s ease', cursor: 'default' }}>
+                        {complaint.status}
+                      </span>
+                    )}
                   </td>
                   <td style={{ padding: '1rem', fontSize: '0.875rem', color: '#94a3b8' }}>{new Date(complaint.created_at).toLocaleDateString()}</td>
                   <td style={{ padding: '1rem' }}>
                     <button onClick={() => handleViewDetails(complaint)} style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.875rem', marginRight: '0.5rem', transition: 'all 0.3s ease', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)' }} onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.5)'; }} onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.3)'; }}>
                       View
                     </button>
-                    {userRole === 'admin' && (
-                      <button onClick={() => handleEditStatus(complaint)} style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.875rem', transition: 'all 0.3s ease', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }} onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.5)'; }} onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)'; }}>
-                        Update
-                      </button>
-                    )}
                   </td>
                 </tr>
               ))}
@@ -159,8 +176,6 @@ function ComplaintList({ token, userRole, refreshKey }) {
         </div>
       )}
 
-      {/* Status Update Modal */}
-      {showModal && <StatusUpdateModal complaint={selectedComplaint} token={token} onClose={() => setShowModal(false)} onStatusUpdated={handleStatusUpdated} />}
     </div>
   );
 }

@@ -71,5 +71,37 @@ export default async function handler(req, res) {
     }
   }
 
+  if (req.method === 'PATCH') {
+    if (!isAdmin) {
+      return res.status(403).json({ message: 'Access Denied: Admin privileges required.' });
+    }
+
+    const { status } = req.body;
+    const { id } = req.query; // Assuming Vercel uses query params for dynamic routes
+
+    if (!status || !["pending", "processing", "resolved"].includes(status.toLowerCase())) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    try {
+      const { data: complaint, error } = await supabase
+        .from('complaints')
+        .update({ status: status.toLowerCase() })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (!complaint) {
+        return res.status(404).json({ message: "Complaint not found" });
+      }
+
+      res.json(complaint);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
   return res.status(405).json({ message: 'Method Not Allowed' });
 }
