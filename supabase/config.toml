@@ -1,0 +1,8 @@
+[project]
+project_id = "lsrtscmguepoumwsenme"
+
+[api]
+enabled = true
+
+[functions.update-status]
+verify_jwt = false

@@ -1,47 +1,32 @@
 import { supabase } from '../_supabase.js';
 
-export default async function handler(req) {
+export default async function handler(req, res) {
   // 1. Switch to POST for simplified universal matching
   if (req.method !== 'POST' && req.method !== 'PATCH') {
-    return new Response(JSON.stringify({ message: `Method ${req.method} Not Allowed. Use POST or PATCH.` }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(405).json({ message: `Method ${req.method} Not Allowed. Use POST or PATCH.` });
   }
 
   // 2. Extract ID and status from the BODY (not the URL)
-  const { id, status } = await req.json();
+  const { id, status } = req.body;
 
   if (!id) {
-    return new Response(JSON.stringify({ message: 'Error: Missing complaint ID (id) in request body.' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(400).json({ message: 'Error: Missing complaint ID (id) in request body.' });
   }
 
   if (!status) {
-    return new Response(JSON.stringify({ message: 'Error: Status field is required in request body.' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(400).json({ message: 'Error: Status field is required in request body.' });
   }
 
   // 3. Authorization
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader) return new Response(JSON.stringify({ message: 'Authentication required. Missing token.' }), {
-    status: 401,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'Authentication required. Missing token.' });
   const token = authHeader.replace('Bearer ', '');
 
   try {
     // 4. Validate Session
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
-      return new Response(JSON.stringify({ message: 'Your session has expired. Please log in again.' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(401).json({ message: 'Your session has expired. Please log in again.' });
     }
 
     // 5. Check Admin Role
@@ -52,10 +37,7 @@ export default async function handler(req) {
       .single();
 
     if (profileErr || profile?.role !== 'admin') {
-      return new Response(JSON.stringify({ message: 'Access Denied: Admin privileges required.' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(403).json({ message: 'Access Denied: Admin privileges required.' });
     }
 
     // 6. Execute the Update using the ID from the body
@@ -67,28 +49,19 @@ export default async function handler(req) {
       .single();
 
     if (updateErr) {
-      return new Response(JSON.stringify({ message: `Database update failed: ${updateErr.message}` }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return res.status(400).json({ message: `Database update failed: ${updateErr.message}` });
     }
 
-    return new Response(JSON.stringify({ 
+    return res.status(200).json({ 
       message: 'Complaint status updated successfully!', 
       data: updatedData 
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
     });
 
   } catch (err) {
     console.error('Fatal API Error:', err);
-    return new Response(JSON.stringify({ 
+    return res.status(500).json({ 
       message: 'Internal Application Error. Please try again.', 
       details: err.message 
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
     });
   }
 }
