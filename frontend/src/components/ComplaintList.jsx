@@ -59,13 +59,17 @@ function ComplaintList({ token, userRole, refreshKey }) {
 
       const data = await res.json();
 
+      if (!res.ok) {
+        throw new Error(data?.message || data?.error || `HTTP ${res.status}: ${res.statusText}`);
+      }
+
       // Update UI instantly
       setComplaints(prev =>
         prev.map(c => c.id === id ? data : c)
       );
     } catch (err) {
-      console.error(err);
-      setError('Failed to update status');
+      console.error('Update status error:', err);
+      setError(err.message || 'Failed to update status');
     }
   };
 
