@@ -1,6 +1,15 @@
-import { supabase } from '../_supabase.js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-export default async function handler(req) {
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+export default async function handler(req: Request): Promise<Response> {
   // 1. Switch to POST for simplified universal matching
   if (req.method !== 'POST' && req.method !== 'PATCH') {
     return new Response(JSON.stringify({ message: `Method ${req.method} Not Allowed. Use POST or PATCH.` }), {
@@ -73,9 +82,9 @@ export default async function handler(req) {
       });
     }
 
-    return new Response(JSON.stringify({ 
-      message: 'Complaint status updated successfully!', 
-      data: updatedData 
+    return new Response(JSON.stringify({
+      message: 'Complaint status updated successfully!',
+      data: updatedData
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -83,9 +92,9 @@ export default async function handler(req) {
 
   } catch (err) {
     console.error('Fatal API Error:', err);
-    return new Response(JSON.stringify({ 
-      message: 'Internal Application Error. Please try again.', 
-      details: err.message 
+    return new Response(JSON.stringify({
+      message: 'Internal Application Error. Please try again.',
+      details: err.message
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

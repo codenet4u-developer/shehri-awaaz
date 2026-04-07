@@ -13,7 +13,7 @@ function StatusUpdateModal({ complaint, token, onClose, onStatusUpdated }) {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/complaints/update-status`, {
+      const response = await fetch(`${API_URL}/update-status`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
