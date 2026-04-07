@@ -57,7 +57,14 @@ function ComplaintList({ token, userRole, refreshKey }) {
         body: JSON.stringify({ status })
       });
 
-      const data = await res.json();
+      let data;
+      const text = await res.text();
+      
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        throw new Error(`Server returned non-JSON: ${text.substring(0, 100)}`);
+      }
 
       if (!res.ok) {
         throw new Error(data?.message || data?.error || `HTTP ${res.status}: ${res.statusText}`);
