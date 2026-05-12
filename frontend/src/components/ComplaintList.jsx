@@ -42,6 +42,14 @@ function ComplaintList({ token, userRole, refreshKey }) {
     return { background: 'rgba(34, 197, 94, 0.1)', color: '#4ade80' };
   };
 
+  const formatStatusLabel = (status) => {
+    if (!status) return 'Unknown';
+    return status
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const handleViewDetails = (complaint) => {
     setSelectedComplaint(complaint);
   };
@@ -104,16 +112,17 @@ function ComplaintList({ token, userRole, refreshKey }) {
             </thead>
             <tbody>
               {complaints.map((complaint, idx) => (
-                <tr key={complaint.id} style={{ borderBottom: '1px solid rgba(34, 197, 94, 0.1)', transition: 'all 0.3s ease', animation: `fadeIn 0.5s ease-out ${idx * 0.05}s both` }} onMouseEnter={(e) => { e.target.style.background = 'rgba(34, 197, 94, 0.08)'; }} onMouseLeave={(e) => { e.target.style.background = 'transparent'; }}>
+                <tr key={complaint.id} className="complaint-row" style={{ borderBottom: '1px solid rgba(34, 197, 94, 0.1)', transition: 'all 0.3s ease', animation: `fadeIn 0.5s ease-out ${idx * 0.05}s both` }}>
                   <td style={{ padding: '1rem', color: '#f3f4f6' }}>{complaint.title}</td>
                   <td style={{ padding: '1rem', color: '#94a3b8' }}>{complaint.category}</td>
                   <td style={{ padding: '1rem', color: '#94a3b8' }}>{complaint.location}</td>
-                  <td style={{ padding: '1rem' }}>
+                  <td style={{ padding: '1rem', minWidth: '220px' }}>
                     {userRole === 'admin' ? (
                       <select
                         value={complaint.status}
                         onChange={(e) => updateStatus(complaint.id, e.target.value)}
-                        style={{ background: 'rgba(30, 41, 59, 0.8)', color: '#f3f4f6', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.875rem' }}
+                        className="status-select"
+                        aria-label={`Set status for ${complaint.title}`}
                       >
                         <option value="pending">Pending</option>
                         <option value="in-progress">In Progress</option>
@@ -122,7 +131,7 @@ function ComplaintList({ token, userRole, refreshKey }) {
                       </select>
                     ) : (
                       <span style={{ ...getStatusBadgeColor(complaint.status), padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.875rem', fontWeight: '600', display: 'inline-block', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', transition: 'all 0.3s ease', cursor: 'default' }}>
-                        {complaint.status}
+                        {formatStatusLabel(complaint.status)}
                       </span>
                     )}
                   </td>
@@ -163,7 +172,7 @@ function ComplaintList({ token, userRole, refreshKey }) {
                   boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
                 }}
               >
-                {selectedComplaint.status}
+                {formatStatusLabel(selectedComplaint.status)}
               </span>
             </p>
             <p style={{ color: '#94a3b8', marginBottom: '1rem' }}>
