@@ -79,14 +79,15 @@ export default async function handler(req, res) {
     const { status } = req.body;
     const { id } = req.query; // Assuming Vercel uses query params for dynamic routes
 
-    if (!status || !["pending", "processing", "resolved"].includes(status.toLowerCase())) {
+    const normalizedStatus = status?.toLowerCase();
+    if (!status || !["pending", "in-progress", "processing", "resolved", "rejected"].includes(normalizedStatus)) {
       return res.status(400).json({ message: "Invalid status" });
     }
 
     try {
       const { data: complaint, error } = await supabase
         .from('complaints')
-        .update({ status: status.toLowerCase() })
+        .update({ status: normalizedStatus })
         .eq('id', id)
         .select()
         .single();

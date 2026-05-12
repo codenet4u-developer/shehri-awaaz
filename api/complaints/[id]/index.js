@@ -1,4 +1,4 @@
-import { supabase } from '../_supabase.js';
+import { supabase } from '../../_supabase.js';
 
 export default async function handler(req, res) {
   console.log('PATCH /api/complaints/[id] called', { method: req.method, query: req.query });
@@ -12,7 +12,8 @@ export default async function handler(req, res) {
 
   console.log('Request data', { id, status });
 
-  if (!status || !["pending", "processing", "resolved"].includes(status.toLowerCase())) {
+  const normalizedStatus = status?.toLowerCase();
+  if (!status || !["pending", "in-progress", "processing", "resolved", "rejected"].includes(normalizedStatus)) {
     console.log('Invalid status', status);
     return res.status(400).json({ message: "Invalid status" });
   }
@@ -40,10 +41,10 @@ export default async function handler(req, res) {
       return res.status(403).json({ message: 'Access Denied: Admin privileges required.' });
     }
 
-    console.log('Updating complaint', id, 'to status', status);
+    console.log('Updating complaint', id, 'to status', normalizedStatus);
     const { data: complaint, error } = await supabase
       .from('complaints')
-      .update({ status: status.toLowerCase() })
+      .update({ status: normalizedStatus })
       .eq('id', id)
       .select()
       .single();

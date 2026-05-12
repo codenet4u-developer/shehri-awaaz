@@ -40,10 +40,15 @@ export default async function handler(req, res) {
       return res.status(403).json({ message: 'Access Denied: Admin privileges required.' });
     }
 
+    const normalizedStatus = status?.toLowerCase();
+    if (!normalizedStatus || !["pending", "in-progress", "processing", "resolved", "rejected"].includes(normalizedStatus)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
     // 6. Execute the Update using the ID from the body
     const { data: updatedData, error: updateErr } = await supabase
       .from('complaints')
-      .update({ status: status })
+      .update({ status: normalizedStatus })
       .eq('id', id)
       .select()
       .single();

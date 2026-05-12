@@ -116,8 +116,9 @@ function ComplaintList({ token, userRole, refreshKey }) {
                         style={{ background: 'rgba(30, 41, 59, 0.8)', color: '#f3f4f6', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '8px', padding: '0.5rem', fontSize: '0.875rem' }}
                       >
                         <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
+                        <option value="in-progress">In Progress</option>
                         <option value="resolved">Resolved</option>
+                        <option value="rejected">Rejected</option>
                       </select>
                     ) : (
                       <span style={{ ...getStatusBadgeColor(complaint.status), padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.875rem', fontWeight: '600', display: 'inline-block', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', transition: 'all 0.3s ease', cursor: 'default' }}>
@@ -139,7 +140,7 @@ function ComplaintList({ token, userRole, refreshKey }) {
       )}
 
       {/* View Details Modal */}
-      {selectedComplaint && !showModal && (
+      {selectedComplaint && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(5px)', animation: 'fadeIn 0.3s ease' }}>
           <div style={{ background: 'linear-gradient(135deg, #1a2332 0%, rgba(30, 41, 59, 0.95) 100%)', borderRadius: '12px', padding: '2rem', maxWidth: '600px', width: '90%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)', border: '1px solid rgba(34, 197, 94, 0.2)', animation: 'slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1)' }}>
             <h2 style={{ color: '#4ade80', marginTop: 0 }}>{selectedComplaint.title}</h2>
