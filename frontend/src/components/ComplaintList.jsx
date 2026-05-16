@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL, BASE_URL } from '../config.js';
+import { supabase } from '../supabaseClient.js';
 
 function ComplaintList({ token, userRole, refreshKey }) {
   const [complaints, setComplaints] = useState([]);
@@ -56,26 +57,15 @@ function ComplaintList({ token, userRole, refreshKey }) {
 
   const updateStatus = async (id, status) => {
     try {
-      const res = await fetch(`${API_URL}/complaints/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ status })
-      });
+      const { data, error: supabaseError } = await supabase
+        .from('complaints')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
 
-      let data;
-      const text = await res.text();
-      
-      try {
-        data = JSON.parse(text);
-      } catch (err) {
-        throw new Error(`Server returned non-JSON: ${text.substring(0, 100)}`);
-      }
-
-      if (!res.ok) {
-        throw new Error(data?.message || data?.error || `HTTP ${res.status}: ${res.statusText}`);
+      if (supabaseError) {
+        throw new Error(supabaseError.message || 'Failed to update status');
       }
 
       // Update UI instantly
