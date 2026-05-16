@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { API_URL } from '../config.js';
-
+import { supabase } from '../supabaseClient.js';
 function StatusUpdateModal({ complaint, token, onClose, onStatusUpdated }) {
   const [status, setStatus] = useState(complaint.status);
   const [message, setMessage] = useState('');
@@ -13,26 +13,13 @@ function StatusUpdateModal({ complaint, token, onClose, onStatusUpdated }) {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/complaints/update-status`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ id: complaint.id, status, message }),
-      });
+      const { error: supabaseError } = await supabase
+        .from('complaints')
+        .update({ status: status })
+        .eq('id', complaint.id);
 
-      let data;
-      const text = await response.text();
-      
-      try {
-        if (text) data = JSON.parse(text);
-      } catch (err) {
-        throw new Error(`Server returned non-JSON: ${text.substring(0, 50)}`);
-      }
-
-      if (!response.ok) {
-        throw new Error(data?.error || data?.message || 'Failed to update complaint');
+      if (supabaseError) {
+        throw new Error(supabaseError.message || 'Failed to update complaint');
       }
 
       onStatusUpdated();
